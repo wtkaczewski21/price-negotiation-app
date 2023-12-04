@@ -1,4 +1,5 @@
-﻿using Domain.Models;
+﻿using Domain.Interfaces;
+using Domain.Models;
 using Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -9,66 +10,57 @@ namespace WebAPI.Controllers
     [ApiController]
     public class ProductController : ControllerBase
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IProductService _productService;
 
-        public ProductController(ApplicationDbContext context)
+        public ProductController(IProductService productService)
         {
-            _context = context;
+            _productService = productService;
         }
 
         [HttpGet]
         public async Task<ActionResult<List<Product>>> GetAllProducts()
         {
-            var products = await _context.Products.ToListAsync();
+            var products = await _productService.GetAllProducts();
 
             return Ok(products);
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<Product>> GetProduct(int id)
+        public async Task<ActionResult<Product>> GetSingleProduct(int id)
         {
-            var dbProduct = await _context.Products.FindAsync(id);
-            if (dbProduct == null)
+            var product = await _productService.GetSingleProduct(id);
+            if (product == null)
                 return NotFound("Product not found");
 
-            return Ok(dbProduct);
+            return Ok(product);
         }
 
         [HttpPost]
-        public async Task<ActionResult<List<Product>>> AddProduct(Product product)
+        public async Task<ActionResult<Product>> AddProduct(Product product)
         {
-            _context.Products.Add(product);
-            await _context.SaveChangesAsync();
+            var result = await _productService.AddProduct(product);
 
-            return Ok(await _context.Products.ToListAsync());
+            return Ok(result);
         }
 
-        [HttpPut]
-        public async Task<ActionResult<List<Product>>> UpdateProduct(Product updatedProduct)
+        [HttpPut("{id}")]
+        public async Task<ActionResult<Product>> UpdateProduct(int id, Product request)
         {
-            var dbProduct = await _context.Products.FindAsync(updatedProduct.Id);
-            if (dbProduct == null)
+            var result = await _productService.UpdateProduct(id, request);
+            if (result == null)
                 return NotFound("Product not found");
 
-            dbProduct.Name = updatedProduct.Name;
-            dbProduct.Description = updatedProduct.Description;
-            dbProduct.Price = updatedProduct.Price;
-            await _context.SaveChangesAsync();
-
-            return Ok(await _context.Products.ToListAsync());
+            return Ok(result);
         }
 
-        [HttpDelete]
-        public async Task<ActionResult<List<Product>>> DeleteProduct(int id)
+        [HttpDelete("{id}")]
+        public async Task<ActionResult<Product>> DeleteProduct(int id)
         {
-            var dbProduct = await _context.Products.FindAsync(id);
-            if (dbProduct == null)
+            var result = await _productService.DeleteProduct(id);
+            if (result == null)
                 return NotFound("Product not found");
 
-            _context.Products.Remove(dbProduct);
-            await _context.SaveChangesAsync();
-
-            return Ok(await _context.Products.ToListAsync());
+            return Ok(result);
         }
     }
 }
