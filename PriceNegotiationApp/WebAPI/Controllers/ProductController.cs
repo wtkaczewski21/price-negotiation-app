@@ -1,8 +1,8 @@
-﻿using Domain.Interfaces;
+﻿using Application.Services;
+using Domain.Interfaces;
 using Domain.Models;
 using Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace WebAPI.Controllers
 {
@@ -18,11 +18,9 @@ namespace WebAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<Product>>> GetAllProducts()
+        public async Task<ActionResult<List<Product>>> GetProducts()
         {
-            var products = await _productService.GetAllProducts();
-
-            return Ok(products);
+            return Ok(await _productService.GetAllProducts());
         }
 
         [HttpGet("{id}")]
@@ -36,15 +34,17 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult<Product>> AddProduct(Product product)
+        public async Task<ActionResult<Product>> AddProduct([FromBody] Product product)
         {
-            var result = await _productService.AddProduct(product);
+            if (product.Price <= 0)
+                return BadRequest("Cena produktu musi być większa od 0.");
 
-            return Ok(result);
+            await _productService.AddProduct(product);
+            return CreatedAtAction(nameof(GetProducts), new { id = product.Id }, product);
         }
 
         [HttpPut("{id}")]
-        public async Task<ActionResult<Product>> UpdateProduct(int id, Product request)
+        public async Task<ActionResult<List<Product>>> UpdateProduct(int id, Product request)
         {
             var result = await _productService.UpdateProduct(id, request);
             if (result == null)
@@ -54,11 +54,12 @@ namespace WebAPI.Controllers
         }
 
         [HttpDelete("{id}")]
-        public async Task<ActionResult<Product>> DeleteProduct(int id)
+        public async Task<ActionResult<List<Product>>> DeleteProduct(int id)
         {
             var result = await _productService.DeleteProduct(id);
+
             if (result == null)
-                return NotFound("Product not found");
+                return NotFound();
 
             return Ok(result);
         }

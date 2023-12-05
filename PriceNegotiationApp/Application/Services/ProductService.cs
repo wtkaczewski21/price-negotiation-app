@@ -14,12 +14,12 @@ public class ProductService : IProductService
         _context = context;
     }
 
-    public async Task<List<Product>?> AddProduct(Product product)
+    public async Task<Product?> AddProduct(Product product)
     {
         await _context.Products.AddAsync(product);
         await _context.SaveChangesAsync();
 
-        return await _context.Products.ToListAsync();
+        return product;
     }
 
     public async Task<List<Product>?> DeleteProduct(int id)
@@ -56,7 +56,6 @@ public class ProductService : IProductService
             return null;
 
         product.Name = request.Name;
-        product.Description = request.Description;
         product.Price = request.Price;
 
         await _context.SaveChangesAsync();
